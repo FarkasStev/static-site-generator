@@ -28,4 +28,6 @@ class TestParentNode(unittest.TestCase):
             message = str(e)
             self.assertEqual(message, "ParentNode has no children")
         self.assertTrue(exception_raised)
-            
+
+if __name__ == "__main__":
+    unittest.main()

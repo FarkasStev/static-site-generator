@@ -44,3 +44,6 @@ class TestLeafNode(unittest.TestCase):
         html_node = text_node_to_html_node(node)
         self.assertEqual(html_node.tag, "img")
         self.assertEqual(html_node.to_html(), "<img src=\"google.com\" alt=\"This is a image node\"></img>")
+
+if __name__ == "__main__":
+    unittest.main()
