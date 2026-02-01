@@ -111,5 +111,4 @@ def text_to_textnodes(text):
     coded_nodes = split_nodes_delimiter(italicized_nodes, "`", TextType.CODE)
     imaged_nodes = split_nodes_image(coded_nodes)
     linked_nodes = split_nodes_link(imaged_nodes)
-    print(f"linked_nodes:{linked_nodes}")
     return linked_nodes
