@@ -1,7 +1,7 @@
 import re
 
 from leafnode import LeafNode
-from textnode import TextType
+from textnode import TextNode, TextType
 
 
 def text_node_to_html_node(text_node):
@@ -22,6 +22,26 @@ def text_node_to_html_node(text_node):
             raise Exception("Invalid text type")
 
 
+def split_nodes_delimiter(old_nodes, delimiter, text_type):
+    new_nodes = []
+    for node in old_nodes:
+        if node.text_type != TextType.TEXT:
+            new_nodes.append(node)
+        else:
+            split_node = node.text.split(delimiter)
+            if len(split_node) > 1 and len(split_node) % 3 > 0:
+                raise Exception("Invalid Markdown")
+            affected = False
+            for new_node in split_node:
+                if len(new_node) > 0:
+                    if not affected:
+                        new_nodes.append(TextNode(new_node, TextType.TEXT))
+                    else:
+                        new_nodes.append(TextNode(new_node, text_type))
+                affected = not affected
+    return new_nodes
+
+
 def extract_markdown_images(text):
     pattern = r"\!\[([^\]]*)\]\(([^)]*)\)"
     matches = re.findall(pattern, text)
@@ -32,3 +52,45 @@ def extract_markdown_links(text):
     pattern = r"\[([^\]]*)\]\(([^)]*)\)"
     matches = re.findall(pattern, text)
     return matches
+
+
+def split_nodes_image(old_nodes):
+    nodes = []
+    if old_nodes is None:
+        return nodes
+    for node in old_nodes:
+        current_text = node.text
+        images = extract_markdown_images(node.text)
+        for i in range(len(images)):
+            image_alt = images[i][0]
+            image_link = images[i][1]
+            current_split = current_text.split(f"![{image_alt}]({image_link})", 1)
+            preceding_text = current_split[0]
+            current_text = current_split[1]
+            if len(preceding_text) > 0:
+                nodes.append(TextNode(preceding_text, TextType.TEXT))
+            nodes.append(TextNode(image_alt, TextType.IMAGE, image_link))
+        if len(current_text) > 0:
+            nodes.append(TextNode(current_text, TextType.TEXT))
+    return nodes
+
+
+def split_nodes_link(old_nodes):
+    nodes = []
+    if old_nodes is None:
+        return nodes
+    for node in old_nodes:
+        current_text = node.text
+        images = extract_markdown_links(node.text)
+        for i in range(len(images)):
+            link_text = images[i][0]
+            link_target = images[i][1]
+            current_split = current_text.split(f"[{link_text}]({link_target})", 1)
+            preceding_text = current_split[0]
+            current_text = current_split[1]
+            if len(preceding_text) > 0:
+                nodes.append(TextNode(preceding_text, TextType.TEXT))
+            nodes.append(TextNode(link_text, TextType.LINK, link_target))
+        if len(current_text) > 0:
+            nodes.append(TextNode(current_text, TextType.TEXT))
+    return nodes

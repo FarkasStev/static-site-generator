@@ -3,6 +3,9 @@ import unittest
 from conversion import (
     extract_markdown_images,
     extract_markdown_links,
+    split_nodes_delimiter,
+    split_nodes_image,
+    split_nodes_link,
     text_node_to_html_node,
 )
 from textnode import TextNode, TextType
@@ -45,7 +48,7 @@ class TestConversion(unittest.TestCase):
             html_node.to_html(), '<a href="google.com">This is a link node</a>'
         )
 
-    def test_image(self):
+    def test_image_to_html(self):
         node = TextNode("This is a image node", TextType.IMAGE, "google.com")
         html_node = text_node_to_html_node(node)
         self.assertEqual(html_node.tag, "img")
@@ -53,6 +56,66 @@ class TestConversion(unittest.TestCase):
             html_node.to_html(),
             '<img src="google.com" alt="This is a image node"></img>',
         )
+
+    def test_no_delimeter(self):
+        node = TextNode("This is a text node", TextType.TEXT)
+        node2 = TextNode("This is a text node", TextType.TEXT)
+        result = split_nodes_delimiter([node, node2], "*", TextType.BOLD)
+        expected = [node, node2]
+        self.assertEqual(expected, result)
+
+    def test_bold_node_input(self):
+        node = TextNode("This is a text node", TextType.BOLD)
+        node2 = TextNode("This is a text node", TextType.BOLD)
+        result = split_nodes_delimiter([node, node2], "*", TextType.BOLD)
+        expected = [node, node2]
+        self.assertEqual(len(expected), len(result))
+        for i in range(len(expected)):
+            self.assertEqual(expected[i], result[i])
+
+    def test_bold_delimiter(self):
+        node = TextNode("This is a *bold* node", TextType.TEXT)
+        node2 = TextNode("*This* is a bold node", TextType.TEXT)
+        result = split_nodes_delimiter([node, node2], "*", TextType.BOLD)
+        result_node = TextNode("This is a ", TextType.TEXT)
+        result_node1 = TextNode("bold", TextType.BOLD)
+        result_node2 = TextNode(" node", TextType.TEXT)
+        result_node3 = TextNode("This", TextType.BOLD)
+        result_node4 = TextNode(" is a bold node", TextType.TEXT)
+        expected = [result_node, result_node1, result_node2, result_node3, result_node4]
+
+        self.assertEqual(len(expected), len(result))
+        for i in range(len(expected)):
+            self.assertEqual(expected[i], result[i])
+
+    def test_italic_delimiter(self):
+        node = TextNode("This is _a_ italic node", TextType.TEXT)
+        node2 = TextNode("This *is* a italic _node_", TextType.TEXT)
+        result = split_nodes_delimiter([node, node2], "_", TextType.ITALIC)
+        result_node = TextNode("This is ", TextType.TEXT)
+        result_node1 = TextNode("a", TextType.ITALIC)
+        result_node2 = TextNode(" italic node", TextType.TEXT)
+        result_node3 = TextNode("This *is* a italic ", TextType.TEXT)
+        result_node4 = TextNode("node", TextType.ITALIC)
+        expected = [result_node, result_node1, result_node2, result_node3, result_node4]
+
+        self.assertEqual(len(expected), len(result))
+        for i in range(len(expected)):
+            self.assertEqual(expected[i], result[i])
+
+    def test_code_delimeter(self):
+        node = TextNode("This is a `code` node", TextType.TEXT)
+        node2 = TextNode("`This is a code node`", TextType.TEXT)
+        result = split_nodes_delimiter([node, node2], "`", TextType.CODE)
+        result_node = TextNode("This is a ", TextType.TEXT)
+        result_node1 = TextNode("code", TextType.CODE)
+        result_node2 = TextNode(" node", TextType.TEXT)
+        result_node3 = TextNode("This is a code node", TextType.CODE)
+        expected = [result_node, result_node1, result_node2, result_node3]
+
+        self.assertEqual(len(expected), len(result))
+        for i in range(len(expected)):
+            self.assertEqual(expected[i], result[i])
 
     def test_extract_markdown_images(self):
         matches = extract_markdown_images(
@@ -88,6 +151,160 @@ class TestConversion(unittest.TestCase):
                 ("link2", "https://i.imgur.com/zjjcJKZ.png"),
             ],
             matches,
+        )
+
+    def test_split_images(self):
+        node = TextNode(
+            "This is text with an ![image](https://i.imgur.com/zjjcJKZ.png) and another ![second image](https://i.imgur.com/3elNhQu.png)",
+            TextType.TEXT,
+        )
+        new_nodes = split_nodes_image([node])
+        self.assertListEqual(
+            [
+                TextNode("This is text with an ", TextType.TEXT),
+                TextNode("image", TextType.IMAGE, "https://i.imgur.com/zjjcJKZ.png"),
+                TextNode(" and another ", TextType.TEXT),
+                TextNode(
+                    "second image", TextType.IMAGE, "https://i.imgur.com/3elNhQu.png"
+                ),
+            ],
+            new_nodes,
+        )
+
+    def test_split_images_no_leading_with_trailing(self):
+        node = TextNode(
+            "![image](https://i.imgur.com/zjjcJKZ.png) and another ![second image](https://i.imgur.com/3elNhQu.png) and trailing",
+            TextType.TEXT,
+        )
+        new_nodes = split_nodes_image([node])
+        self.assertListEqual(
+            [
+                TextNode("image", TextType.IMAGE, "https://i.imgur.com/zjjcJKZ.png"),
+                TextNode(" and another ", TextType.TEXT),
+                TextNode(
+                    "second image",
+                    TextType.IMAGE,
+                    "https://i.imgur.com/3elNhQu.png",
+                ),
+                TextNode(" and trailing", TextType.TEXT),
+            ],
+            new_nodes,
+        )
+
+    def test_split_image_one_image_no_text(self):
+        node = TextNode(
+            "![image](https://i.imgur.com/zjjcJKZ.png)",
+            TextType.TEXT,
+        )
+        new_nodes = split_nodes_image([node])
+        self.assertListEqual(
+            [
+                TextNode("image", TextType.IMAGE, "https://i.imgur.com/zjjcJKZ.png"),
+            ],
+            new_nodes,
+        )
+
+    def test_split_image_two_images_no_text(self):
+        node = TextNode(
+            "![image](https://i.imgur.com/zjjcJKZ.png)![image](https://i.imgur.com/2zjjcJKZ.png)",
+            TextType.TEXT,
+        )
+        new_nodes = split_nodes_image([node])
+        self.assertListEqual(
+            [
+                TextNode("image", TextType.IMAGE, "https://i.imgur.com/zjjcJKZ.png"),
+                TextNode("image", TextType.IMAGE, "https://i.imgur.com/2zjjcJKZ.png"),
+            ],
+            new_nodes,
+        )
+
+    def test_split_images_empty_input(self):
+        new_nodes = split_nodes_image([])
+        self.assertListEqual(
+            [],
+            new_nodes,
+        )
+        new_nodes = split_nodes_image(None)
+        self.assertListEqual(
+            [],
+            new_nodes,
+        )
+
+    def test_split_links(self):
+        node = TextNode(
+            "This is text with an [link](https://i.imgur.com/zjjcJKZ.png) and another [second link](https://i.imgur.com/3elNhQu.png)",
+            TextType.TEXT,
+        )
+        new_nodes = split_nodes_link([node])
+        self.assertListEqual(
+            [
+                TextNode("This is text with an ", TextType.TEXT),
+                TextNode("link", TextType.LINK, "https://i.imgur.com/zjjcJKZ.png"),
+                TextNode(" and another ", TextType.TEXT),
+                TextNode(
+                    "second link", TextType.LINK, "https://i.imgur.com/3elNhQu.png"
+                ),
+            ],
+            new_nodes,
+        )
+
+    def test_split_links_no_leading_with_trailing(self):
+        node = TextNode(
+            "[link](https://i.imgur.com/zjjcJKZ.png) and another [second link](https://i.imgur.com/3elNhQu.png) and trailing",
+            TextType.TEXT,
+        )
+        new_nodes = split_nodes_link([node])
+        self.assertListEqual(
+            [
+                TextNode("link", TextType.LINK, "https://i.imgur.com/zjjcJKZ.png"),
+                TextNode(" and another ", TextType.TEXT),
+                TextNode(
+                    "second link",
+                    TextType.LINK,
+                    "https://i.imgur.com/3elNhQu.png",
+                ),
+                TextNode(" and trailing", TextType.TEXT),
+            ],
+            new_nodes,
+        )
+
+    def test_split_links_one_link_no_text(self):
+        node = TextNode(
+            "[link](https://i.imgur.com/zjjcJKZ.png)",
+            TextType.TEXT,
+        )
+        new_nodes = split_nodes_link([node])
+        self.assertListEqual(
+            [
+                TextNode("link", TextType.LINK, "https://i.imgur.com/zjjcJKZ.png"),
+            ],
+            new_nodes,
+        )
+
+    def test_split_links_two_link_no_text(self):
+        node = TextNode(
+            "[link](https://i.imgur.com/zjjcJKZ.png)[link](https://i.imgur.com/2zjjcJKZ.png)",
+            TextType.TEXT,
+        )
+        new_nodes = split_nodes_link([node])
+        self.assertListEqual(
+            [
+                TextNode("link", TextType.LINK, "https://i.imgur.com/zjjcJKZ.png"),
+                TextNode("link", TextType.LINK, "https://i.imgur.com/2zjjcJKZ.png"),
+            ],
+            new_nodes,
+        )
+
+    def test_split_links_empty_input(self):
+        new_nodes = split_nodes_link([])
+        self.assertListEqual(
+            [],
+            new_nodes,
+        )
+        new_nodes = split_nodes_link(None)
+        self.assertListEqual(
+            [],
+            new_nodes,
         )
 
 
