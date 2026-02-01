@@ -1,6 +1,6 @@
 import unittest
 
-from conversion import (
+from inline_conversion import (
     extract_markdown_images,
     extract_markdown_links,
     split_nodes_delimiter,
@@ -12,7 +12,7 @@ from conversion import (
 from textnode import TextNode, TextType
 
 
-class TestConversion(unittest.TestCase):
+class TestInlineConversion(unittest.TestCase):
     def test_text(self):
         node = TextNode("This is a text node", TextType.TEXT)
         html_node = text_node_to_html_node(node)
