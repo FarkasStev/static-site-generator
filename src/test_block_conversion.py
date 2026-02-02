@@ -1,6 +1,11 @@
 import unittest
 
-from block_conversion import BlockType, block_to_block_type, markdown_to_blocks
+from block_conversion import (
+    BlockType,
+    block_to_block_type,
+    extract_title,
+    markdown_to_blocks,
+)
 
 
 class TestBlockConversion(unittest.TestCase):
@@ -109,3 +114,17 @@ This is the same paragraph on a new line
             block_to_block_type("1. This is a list\n2. with items"),
             BlockType.ORDERED_LIST,
         )
+
+    def test_extract_title(self):
+        self.assertEqual(extract_title("# This is a title"), "This is a title")
+        self.assertEqual(
+            extract_title("# This is a title\nThis is a paragraph"), "This is a title"
+        )
+        try:
+            extract_title("## This is a title\nThis is a paragraph")
+        except Exception as e:
+            self.assertEqual(str(e), "No title found")
+        try:
+            extract_title("This is a paragraph")
+        except Exception as e:
+            self.assertEqual(str(e), "No title found")

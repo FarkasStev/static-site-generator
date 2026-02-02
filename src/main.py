@@ -18,6 +18,30 @@ def copy_files(source_dir, destination_dir):
             copy_files(contents, os.path.join(destination_dir, contents))
 
 
+def generate_page(from_path, template_path, dest_path):
+    print(
+        f"Generating page from {from_path} to {dest_path} using template: {template_path}"
+    )
+
+    with open(from_path, "r") as f:
+        markdown = f.read()
+    with open(template_path, "r") as f:
+        template = f.read()
+    title = extract_title(markdown)
+    html = markdown_to_html_node(markdown).to_html()
+    full_html_page = template.replace("{{title}}", title).replace("{{content}}", html)
+
+    with open(dest_path, "w") as f:
+        f.write(full_html_page)
+
+
+def extract_title(markdown):
+    for line in markdown.split("\n"):
+        if line.startswith("# "):
+            return line[2:].strip()
+    raise Exception("No title found")
+
+
 def main():
     copy_files("static", "public")
 
