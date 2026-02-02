@@ -33,7 +33,13 @@ def get_list_nodes(text):
 
 
 def replace_greater_than(text):
-    return text.replace(">", "")
+    lines = []
+    for line in text.split("\n"):
+        line = line.replace(">", "")
+        line = line.lstrip()
+        lines.append(line)
+
+    return "\n".join(lines)
 
 
 def replace_newlines(text):

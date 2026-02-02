@@ -68,7 +68,7 @@ tag here
         html = node.to_html()
         self.assertEqual(
             html,
-            "<div><p>This is <b>bolded</b> paragraph text in a p tag here</p><blockquote>This is quote block with <i>italic</i> text and <code>code</code> here\n This is quote block with <i>italic</i> text and <code>code</code> here</blockquote></div>",
+            "<div><p>This is <b>bolded</b> paragraph text in a p tag here</p><blockquote>This is quote block with <i>italic</i> text and <code>code</code> here\nThis is quote block with <i>italic</i> text and <code>code</code> here</blockquote></div>",
         )
 
     def test_header(self):
