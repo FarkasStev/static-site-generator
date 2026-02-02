@@ -52,3 +52,44 @@ the **same** even with inline stuff
             html,
             "<div><ul><li>Item 1</li><li>Item 2</li></ul><ol><li>Item 1</li><li>Item 2</li><li>Item 3</li></ol></div>",
         )
+
+    def test_quote(self):
+        md = """
+This is **bolded** paragraph
+text in a p
+tag here
+
+>This is quote block with _italic_ text and `code` here
+> This is quote block with _italic_ text and `code` here
+
+"""
+
+        node = markdown_to_html_node(md)
+        html = node.to_html()
+        self.assertEqual(
+            html,
+            "<div><p>This is <b>bolded</b> paragraph text in a p tag here</p><blockquote>This is quote block with <i>italic</i> text and <code>code</code> here\n This is quote block with <i>italic</i> text and <code>code</code> here</blockquote></div>",
+        )
+
+    def test_header(self):
+        md = """
+# Header 1
+
+## Header 2
+
+### Header 3
+
+#### Header 4
+
+##### Header 5
+
+###### Header 6
+
+    """
+
+        node = markdown_to_html_node(md)
+        html = node.to_html()
+        self.assertEqual(
+            html,
+            "<div><h1>Header 1</h1><h2>Header 2</h2><h3>Header 3</h3><h4>Header 4</h4><h5>Header 5</h5><h6>Header 6</h6></div>",
+        )

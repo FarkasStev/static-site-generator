@@ -32,6 +32,10 @@ def get_list_nodes(text):
     return html_nodes
 
 
+def replace_greater_than(text):
+    return text.replace(">", "")
+
+
 def replace_newlines(text):
     return text.replace("\n", " ")
 
@@ -59,12 +63,16 @@ def markdown_to_html_node(markdown):
         elif block_type == BlockType.UNORDERED_LIST:
             nodes.append(ParentNode("ul", children=get_list_nodes(block)))
         elif block_type == BlockType.QUOTE:
-            nodes.append(ParentNode("blockquote", children=text_to_children(block)))
+            nodes.append(
+                ParentNode(
+                    "blockquote", children=text_to_children(replace_greater_than(block))
+                )
+            )
         elif block_type == BlockType.HEADING:
             nodes.append(
                 ParentNode(
                     f"h{get_header_level(block)}",
-                    children=text_to_children(block[get_header_level(block) :]),
+                    children=text_to_children(block[get_header_level(block) + 1 :]),
                 )
             )
 

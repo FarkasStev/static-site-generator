@@ -28,9 +28,9 @@ def split_nodes_delimiter(old_nodes, delimiter, text_type):
         if node.text_type != TextType.TEXT:
             new_nodes.append(node)
         else:
-            split_node = node.text.split(delimiter)
-            if len(split_node) > 1 and len(split_node) % 3 > 0:
+            if node.text.count(delimiter) % 2 > 0:
                 raise Exception("Invalid Markdown")
+            split_node = node.text.split(delimiter)
             affected = False
             for new_node in split_node:
                 if len(new_node) > 0:
