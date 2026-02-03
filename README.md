@@ -19,3 +19,7 @@ Unit tests can be run withthe following command:
 ```
 ./test.sh
 ```
+
+## Example
+[Here](https://farkasstev.github.io/static-site-generator/) is an example site that was generated with this tool.
+
