@@ -12,6 +12,8 @@ class HTMLNode:
         output = ""
         if self.props is None:
             return output
+
+        # create properties HTML string
         for prop in self.props:
             output += f' {prop}="{self.props[prop]}"'
         return output

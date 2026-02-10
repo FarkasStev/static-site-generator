@@ -47,14 +47,20 @@ def replace_newlines(text):
 
 
 def markdown_to_html_node(markdown):
+    # separate into blocks
     blocks = markdown_to_blocks(markdown)
     nodes = []
     for block in blocks:
+        # Extract block type
         block_type = block_to_block_type(block)
+
+        # add paragraph block and extract inline nodes (children)
         if block_type == BlockType.PARAGRAPH:
             nodes.append(
                 ParentNode("p", children=text_to_children(replace_newlines(block)))
             )
+
+        # for code blocks dont do any inline node extraction
         elif block_type == BlockType.CODE:
             nodes.append(
                 ParentNode(
@@ -64,6 +70,8 @@ def markdown_to_html_node(markdown):
                     ],
                 )
             )
+
+        # Add these blocks line by line and extract inline nodes (children)
         elif block_type == BlockType.ORDERED_LIST:
             nodes.append(ParentNode("ol", children=get_list_nodes(block)))
         elif block_type == BlockType.UNORDERED_LIST:
@@ -74,6 +82,8 @@ def markdown_to_html_node(markdown):
                     "blockquote", children=text_to_children(replace_greater_than(block))
                 )
             )
+
+        # Dynamically add heading nodes based on header level
         elif block_type == BlockType.HEADING:
             nodes.append(
                 ParentNode(

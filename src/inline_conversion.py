@@ -25,15 +25,20 @@ def text_node_to_html_node(text_node):
 def split_nodes_delimiter(old_nodes, delimiter, text_type):
     new_nodes = []
     for node in old_nodes:
+        # ignore non-text nodes
         if node.text_type != TextType.TEXT:
             new_nodes.append(node)
         else:
+            # if the text contains an odd number of delimiters, raise an exception
             if node.text.count(delimiter) % 2 > 0:
                 raise Exception("Invalid Markdown")
+
+            # split the text into parts before and after the delimiter
             split_node = node.text.split(delimiter)
             affected = False
             for new_node in split_node:
                 if len(new_node) > 0:
+                    # alternate text type based on within or outside delimiter
                     if not affected:
                         new_nodes.append(TextNode(new_node, TextType.TEXT))
                     else:
@@ -63,17 +68,23 @@ def split_nodes_image(old_nodes):
         images = extract_markdown_images(node.text)
         if len(images) > 0:
             for i in range(len(images)):
+                # split the text into parts before and after the image
                 image_alt = images[i][0]
                 image_link = images[i][1]
                 current_split = current_text.split(f"![{image_alt}]({image_link})", 1)
                 preceding_text = current_split[0]
                 current_text = current_split[1]
+
+                # append any preceding text
                 if len(preceding_text) > 0:
                     nodes.append(TextNode(preceding_text, TextType.TEXT))
+                # append image node
                 nodes.append(TextNode(image_alt, TextType.IMAGE, image_link))
+            # append any remaining text
             if len(current_text) > 0:
                 nodes.append(TextNode(current_text, TextType.TEXT))
         else:
+            # no image found, append the node as is
             nodes.append(node)
 
     return nodes
@@ -88,23 +99,32 @@ def split_nodes_link(old_nodes):
         links = extract_markdown_links(node.text)
         if len(links) > 0:
             for i in range(len(links)):
+                # split the text into parts before and after the link
                 link_text = links[i][0]
                 link_target = links[i][1]
                 current_split = current_text.split(f"[{link_text}]({link_target})", 1)
                 preceding_text = current_split[0]
                 current_text = current_split[1]
+
+                # append any preceding text
                 if len(preceding_text) > 0:
                     nodes.append(TextNode(preceding_text, TextType.TEXT))
+                # append the new link node
                 nodes.append(TextNode(link_text, TextType.LINK, link_target))
+            # append any remaining text
             if len(current_text) > 0:
                 nodes.append(TextNode(current_text, TextType.TEXT))
         else:
+            # no links found, append the node as is
             nodes.append(node)
     return nodes
 
 
 def text_to_textnodes(text):
+    # create initial text node
     initial_node = [TextNode(text, TextType.TEXT)]
+
+    # extract in-line nodes type by type
     bolded_nodes = split_nodes_delimiter(initial_node, "**", TextType.BOLD)
     italicized_nodes = split_nodes_delimiter(bolded_nodes, "_", TextType.ITALIC)
     coded_nodes = split_nodes_delimiter(italicized_nodes, "`", TextType.CODE)

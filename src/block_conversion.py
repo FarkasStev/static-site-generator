@@ -11,6 +11,7 @@ class BlockType(Enum):
 
 
 def markdown_to_blocks(markdown):
+    # Split the markdown into blocks based on double newlines
     result = []
     blocks = markdown.split("\n\n")
     for block in blocks:
@@ -22,16 +23,21 @@ def markdown_to_blocks(markdown):
 
 
 def block_to_block_type(block):
+    # Block types that only have a start and end identifier
     if block.startswith("#"):
         return BlockType.HEADING
     elif block.startswith("```\n") and block.endswith("```"):
         return BlockType.CODE
+
+    # Block types that have an identifier on each line
     lines = block.split("\n")
     curr_num = 0
     for line in lines:
         if block[0] == ">" and line[0] != ">":
+            # block type is not quote, must be paragraph
             return BlockType.PARAGRAPH
         elif block[0:2] == "- " and line[0:2] != "- ":
+            # block type is not unordered list, must be paragraph
             return BlockType.PARAGRAPH
         elif (
             block[0].isdigit()
@@ -43,8 +49,10 @@ def block_to_block_type(block):
         elif block[0].isdigit() and (
             line[1:3] != ". " or not line[0].isdigit() or int(line[0]) != curr_num + 1
         ):
+            # block type is not ordered list, must be paragraph
             return BlockType.PARAGRAPH
 
+    # Block type is valid, now check for quote, unordered list, or ordered list
     if block[0] == ">":
         return BlockType.QUOTE
     elif block[0:2] == "- ":
